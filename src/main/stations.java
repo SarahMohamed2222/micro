@@ -4,8 +4,8 @@ class stations {
 	int value;
     boolean busy;
     instruction instruction;
-    int vj;
-    int vk;
+    float vj;
+    float vk;
     String Qj;
     String Qk;
     String destination;

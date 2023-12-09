@@ -11,7 +11,7 @@ public class main {
 	Vector<IntRegister> IntRegisterfile;
 	Vector<FloatRegister> FloatRegisterfile;
 	Vector<instruction> instructions;
-	int currentcycle;
+	int currentcycle=1;
 	public void next()
 	{
 		
@@ -55,8 +55,6 @@ public class main {
 			{   
 				if(i.exec[0]!=0)
 				{ 
-					
-					
 					if(i.writeres==0)
 					{ 
 						writeres(i);
@@ -101,20 +99,198 @@ public class main {
 	}
 	
 
-	private void issue(instruction i) {
+	private void issue(instruction instruction) {
+		 optype Type = instruction.type;
+		  
+		    
+		    switch (Type) {
+		        case addi  :
+		            issueadd(instruction);
+		            break;
+		        case subi  :
+		            issueadd(instruction);
+		            break;
+		        case muls:
+		            issuemul(instruction);
+		            break;
+		        case divs:
+		            issuemul(instruction);
+		            break;
+		        case lw:
+		            issueld(instruction);
+		            break;
+		        case sw:
+		            issueld(instruction);
+		            break;
+		       
+		        // Other operation cases
+		        default:
+		            // Handle unsupported operations or errors
+		            break;
+		    }
+
+		
+	}
+
+
+	private void issueld(instruction instruction) {
 		// TODO Auto-generated method stub
 		
 	}
 
 
-	private void writeres(instruction instruction)
-	{
-		//instruction will have have the optyp (mul,add,load...) as op r1,r2,r3 as r1,r2,r3 and issue,exectue writeresult attrbutes
-		// exectute will be array of two depicting start and end cycles 
-		//your job  is to check wether it will write its result now or no based on comparsion with the end time to the current 
-		//cycle and update the chache and stations accordingly
-                                                  
+	private void issuemul(instruction instruction) {
+		FloatRegister dest=null;
+		for(FloatRegister R :FloatRegisterfile) {
+			if(R.name.equals(instruction.destination)) {
+				dest=R;
+				break;
+			}
+		}
+		FloatRegister r2=null;
+		for(FloatRegister R :FloatRegisterfile) {
+			if(R.name.equals(instruction.source1)) {
+				r2=R;
+				break;
+			}
+		}
+		FloatRegister r3=null;
+		for(FloatRegister R :FloatRegisterfile) {
+			if(R.name.equals(instruction.source2)) {
+				r3=R;
+				break;
+			}
+		}
+		for(stations s :Mulstations) {
+			if(!s.busy) {
+			
+				s.busy=true;
+				s.instruction=instruction;
+				instruction.issue=currentcycle;
+				s.Qj=r2.qj;
+				s.Qk=r3.qj;
+			
+				if(s.Qj!="") {
+					s.vj=r2.value;
+				}
+				if(s.Qk!="") {
+					s.vk=r3.value;
+				}
+				int ziko=Mulstations.indexOf(s)+1;
+				dest.qj="M"+ziko;
+				return;
+			}
+		}
+		
 
+		
+	}
+
+
+	private void issueadd(instruction instruction) {
+		IntRegister dest=null;
+		for(IntRegister R :IntRegisterfile) {
+			if(R.name.equals(instruction.destination)) {
+				dest=R;
+				break;
+			}
+		}
+		IntRegister r2=null;
+		for(IntRegister R :IntRegisterfile) {
+			if(R.name.equals(instruction.source1)) {
+				r2=R;
+				break;
+			}
+		}
+		IntRegister r3=null;
+		for(IntRegister R :IntRegisterfile) {
+			if(R.name.equals(instruction.source2)) {
+				r3=R;
+				break;
+			}
+		}
+		for(stations s :Addstations) {
+			if(!s.busy) {
+				System.out.print("station empty");
+				s.busy=true;
+				s.instruction=instruction;
+				instruction.issue=currentcycle;
+				s.Qj=r2.qj;
+				s.Qk=r3.qj;
+				
+				if(s.Qj!="") {
+					s.vj=r2.value;
+				}
+				if(s.Qk!="") {
+					s.vk=r3.value;
+				}
+				int ziko=Addstations.indexOf(s)+1;
+				dest.qj="A"+ziko;
+				return;
+			}
+		}
+		
+	}
+
+
+	private void writeres(instruction instruction)
+	{IntRegister dest=null;
+	for(IntRegister R :IntRegisterfile) {
+		if(R.name.equals(instruction.destination)) {
+			dest=R;
+			break;
+		}
+	}
+	IntRegister r2=null;
+	for(IntRegister R :IntRegisterfile) {
+		if(R.name.equals(instruction.source1)) {
+			r2=R;
+			break;
+		}
+	}
+	IntRegister r3=null;
+	for(IntRegister R :IntRegisterfile) {
+		if(R.name.equals(instruction.source2)) {
+			r3=R;
+			break;
+		}
+	}
+		for(IntRegister R :IntRegisterfile) {
+			if(R.name.equals(instruction.destination)) {
+				dest=R;
+				break;
+			}
+		}
+                  
+		int stationunm=-1;
+		
+		if(instruction.exec[1]<currentcycle) {
+                    	 
+                    	 for(stations s: Addstations) {
+                    		 if(s.instruction.equals(instruction)) {
+                    			
+                    			 instruction.writeres=currentcycle;
+                    			 s.busy=false;
+                    			 s.Qj=null;
+                    			 s.Qk=null;
+                    			 dest.qj=null;
+                    			 dest.value=r2.value+r3.value;
+                    			 stationunm=Addstations.indexOf(s)+1;
+                    			break;
+                    			
+                    		 }
+                    	 }
+                    	 
+                     }
+		 for(stations s: Addstations) {
+    		if(s.Qj!=null&& s.Qj.contains("A"+stationunm+"")) {
+    			s.Qj=null;
+    	 }
+    		if(s.Qk!=null&&s.Qk.contains("A"+stationunm+"")) {
+    			s.Qk=null;
+    	 }
+    	 
+     }
 				
 				
 				
@@ -124,12 +300,13 @@ public class main {
 	private void execute(instruction instruction) {
 	    optype Type = instruction.type;
 	  
+	    if(instruction.issue<currentcycle) {
 	    
 	    switch (Type) {
-	        case adds  :
+	        case addi  :
 	            executeAdd(instruction);
 	            break;
-	        case subs  :
+	        case subi  :
 	            executeAdd(instruction);
 	            break;
 	        case muls:
@@ -149,6 +326,7 @@ public class main {
 	        default:
 	            // Handle unsupported operations or errors
 	            break;
+	    }
 	    }
 	}
 
@@ -195,13 +373,13 @@ public class main {
 	   
 	    IntRegister r2 = null;
 	    for( IntRegister r :IntRegisterfile) {
-	    	if(r.name==instruction.source1) {
+	    	if(r.name.equals(instruction.source1)) {
 	    		r2=r;
 	    	}
 	    }
 	    IntRegister r3=null;
 	    for( IntRegister r :IntRegisterfile) {
-	    	if(r.name==instruction.source1) {
+	    	if(r.name.equals(instruction.source1)) {
 	    		r3=r;
 	    	}
 	    }
@@ -210,36 +388,16 @@ public class main {
 
 	    stations addstation = null ; 
 	    for(stations s :Addstations) {
-	    	if(!s.busy) {
+	    	if(s.instruction.equals(instruction)) {
 	    		addstation=s;
 	    		break;
 	    	}
 	    }
 	   // MultiplyFunctionalUnit mulUnit = getAvailableMultiplyUnit();
-
-	   
+            
 	        if (addstation!=null) {
-	        	 boolean readyToExecute = true;
 
-		            if (r2.qj!="") {
-		            
-		                addstation.vj=r2.value;
-		                addstation.Qj="";
-		            } else {
-		                addstation.Qj=r2.qj;
-		                readyToExecute = false;
-		            }
-
-		            if (r2.qj!="") {
-			            
-		                addstation.vj=r2.value;
-		                addstation.Qj="";
-		            } else {
-		                addstation.Qj=r2.qj;
-		                readyToExecute = false;
-		            }
-
-		            if (readyToExecute) {
+		            if (r2.qj==null&&r3.qj==null) {
 		                addstation.busy=true;
 		             
 
@@ -266,14 +424,14 @@ public class main {
 
 	private void executeMultiply(instruction instruction) {
 	  String r1 = instruction.destination;
-	    IntRegister r2 = null;
-	    for( IntRegister r :IntRegisterfile) {
+	  FloatRegister r2 = null;
+	    for( FloatRegister r :FloatRegisterfile) {
 	    	if(r.name==instruction.source1) {
 	    		r2=r;
 	    	}
 	    }
-	    IntRegister r3=null;
-	    for( IntRegister r :IntRegisterfile) {
+	    FloatRegister r3=null;
+	    for( FloatRegister r :FloatRegisterfile) {
 	    	if(r.name==instruction.source1) {
 	    		r3=r;
 	    	}
@@ -283,7 +441,7 @@ public class main {
 
 	    stations mulStation = null ; 
 	    for(stations s :Mulstations) {
-	    	if(!s.busy) {
+	    	if(s.instruction.equals(instruction)) {
 	    		mulStation=s;
 	    		break;
 	    	}
@@ -294,25 +452,7 @@ public class main {
 	        if (mulStation!=null) {
 	            boolean readyToExecute = true;
 
-	            if (r2.qj!="") {
-	            
-	                mulStation.vj=r2.value;
-	                mulStation.Qj="";
-	            } else {
-	                mulStation.Qj=r2.qj;
-	                readyToExecute = false;
-	            }
-
-	            if (r2.qj!="") {
-		            
-	                mulStation.vj=r2.value;
-	                mulStation.Qj="";
-	            } else {
-	                mulStation.Qj=r2.qj;
-	                readyToExecute = false;
-	            }
-
-	            if (readyToExecute) {
+	            if (mulStation.Qj==null&&mulStation.Qk==null) {
 	                mulStation.busy=true;
 	             
 
@@ -419,6 +559,7 @@ public class main {
 	
 	
 	*/
+	
 	
 	
 	
