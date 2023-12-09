@@ -182,6 +182,55 @@ public class main {
 			}
 		}
 		
+	private void writeres(instruction instruction)
+	{
+
+       
+       int end =instruction.exec[2]
+	   if(currentcycle >= end+1){
+		 if(optype.equals(subs) || optype.equals(adds) || optype.equals(addi) || optype.equals(subi) ){
+			for(stations i :Addstations){
+				if(instruction.equals(station.instruction)){
+					station.busy=false
+				}
+			}
+		}
+			if(optype.equals(mulvs) || optype.equals(divs) || optype.equals(addi) || optype.equals(subi) ){
+				for(stations i :Addstations){
+					if(instruction.equals(station.instruction)){
+						station.busy=false
+					}
+				}
+				
+		 }
+		 if(optype.equals(lw) || optype.equals(sw)  ){
+			for(stations i :Addstations){
+				if(instruction.equals(station.instruction)){
+					station.busy=false
+				}
+			}
+			
+		  
+
+	
+	   }
+	   int destination=instruction.destination;
+	   String source1= instruction.source1;
+	   String source2= instruction.source2;
+	   int imm= instruction.immediate;
+		//instruction will have have the optyp (mul,add,load...) as op r1,r2,r3 as r1,r2,r3 and issue,exectue writeresult attrbutes
+		// exectute will be array of two depicting start and end cycles 
+		//your job  is to check wether it will write its result now or no based on comparsion with the end time to the current 
+		//cycle and update the chache and stations accordingly
+        // if lw ana equal to subs adds addi subi haloop on addstations le7ad ma ala2y station el instruction ely gowaha zai el instruction ely m3aky
+		
+   //if instrcution.equals(station.instruction) 
+   //station.busy=false
+	//h3ml kda lel multiply w kman lel load station
+	//h3ml variable esmo inrtuction.destination w yeb2a gowa loop el kebera
+	// String source1= instrucrtion.source1
+    // h3ml nafs el haga le source 2 w el immediate			
+                                                  
 
 		
 	}
@@ -295,6 +344,7 @@ public class main {
 				
 				
     }
+
 	
 	
 	private void execute(instruction instruction) {
@@ -411,6 +461,7 @@ public class main {
    
 	         
 	
+}
 	
 	
 	
