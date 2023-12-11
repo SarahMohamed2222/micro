@@ -7,7 +7,7 @@ public class main {
 	Vector<stations> Addstations;
     Vector<stations> Loadstations;
 	Vector<stations> Mulstations;
-	Vector<Integer> Cache;
+	float[] Cache;
 	Vector<IntRegister> IntRegisterfile;
 	Vector<FloatRegister> FloatRegisterfile;
 	Vector<instruction> instructions;
@@ -19,6 +19,7 @@ public class main {
 		{ 
 			if(i.issue==0) 
 			{   
+				System.out.print(i);
 				issue(i);
 				if(i.issue!=0)
 				{
@@ -110,6 +111,18 @@ public class main {
 		        case subi  :
 		            issueadd(instruction);
 		            break;
+		        case addu  :
+		            issueadd(instruction);
+		            break;
+		        case subu  :
+		            issueadd(instruction);
+		            break;  
+		        case adds  :
+		            issueaddf(instruction);
+		            break;
+		        case subs  :
+		            issueaddf(instruction);
+		            break;   
 		        case muls:
 		            issuemul(instruction);
 		            break;
@@ -122,6 +135,9 @@ public class main {
 		        case sw:
 		            issueld(instruction);
 		            break;
+		        case bnez:
+		        	issueadd(instruction);
+		        	break;
 		       
 		        // Other operation cases
 		        default:
@@ -134,7 +150,40 @@ public class main {
 
 
 	private void issueld(instruction instruction) {
-		// TODO Auto-generated method stub
+		FloatRegister dest=null;
+		for(FloatRegister R :FloatRegisterfile) {
+			if(R.name.equals(instruction.destination)) {
+				dest=R;
+				break;
+			}
+		}
+	IntRegister dest2=null;
+		for(IntRegister R :IntRegisterfile) {
+			if(R.name.equals(instruction.destination)) {
+				dest2=R;
+				break;
+			}
+		}
+
+		for(stations s :this.Loadstations) {
+
+			System.out.print(false);
+			if(!s.busy) {
+				s.busy=true;
+				int index=this.Loadstations.indexOf(s)+1;
+				if(dest!=null) {
+					dest.qj="L"+index;
+					instruction.issue=this.currentcycle;
+					s.instruction=instruction;
+				}else {
+
+					dest2.qj="L"+index;
+					instruction.issue=this.currentcycle;
+					s.instruction=instruction;
+					
+				}
+				break;
+			}}
 		
 	}
 
@@ -161,19 +210,26 @@ public class main {
 				break;
 			}
 		}
+		
 		for(stations s :Mulstations) {
 			if(!s.busy) {
 			
 				s.busy=true;
 				s.instruction=instruction;
 				instruction.issue=currentcycle;
+				if(r2!=null) {
 				s.Qj=r2.qj;
+				}
+				else {
+					
+				}
+				if(r3!=null) {
 				s.Qk=r3.qj;
-			
-				if(s.Qj!="") {
+				}
+				if(s.Qj!=null) {
 					s.vj=r2.value;
 				}
-				if(s.Qk!="") {
+				if(s.Qk!=null) {
 					s.vk=r3.value;
 				}
 				int ziko=Mulstations.indexOf(s)+1;
@@ -181,60 +237,362 @@ public class main {
 				return;
 			}
 		}
+	}
 		
 	private void writeres(instruction instruction)
 	{
-
-       
-       int end =instruction.exec[2]
-	   if(currentcycle >= end+1){
-		 if(optype.equals(subs) || optype.equals(adds) || optype.equals(addi) || optype.equals(subi) ){
-			for(stations i :Addstations){
-				if(instruction.equals(station.instruction)){
-					station.busy=false
+		System.out.print(false);
+		
+		if(instruction.type.equals(optype.bnez)&&currentcycle==instruction.exec[1]) {
+			for(stations s: Addstations) {
+				if(s.busy&&s.instruction.equals(instruction)) {
+					s.busy=false;
+					s.destination=null;
+					s.instruction=null;
+					s.Qj=null;
+					s.Qk=null;
+					
+				}
+				
+			}
+			IntRegister r0 = null;
+		        for(IntRegister f :IntRegisterfile) {
+		        	if(f.name.equals(instruction.source1)) {
+		        		r0=f;;
+		        	}
+		        }
+		        System.out.print("value"+r0.value);
+			if(r0.value!=0) {
+				
+				Vector<instruction> temp=new Vector<instruction>();
+				int i=instruction.immediate;
+				int j=0;
+			 while(true) {
+				 temp.add(instructions.get(j));
+				 if(temp.lastElement().equals(instruction)) {
+					 break;
+				 }
+				 
+				 j++;
+			 }
+			 j++;
+			for(;i<j;i++) {
+			if(instructions.get(i).source2!=null) {
+				instruction temp1=new instruction(instructions.get(i).type,instructions.get(i).destination,instructions.get(i).source1,instructions.get(i).source2, instructions.get(i).exectime);
+				
+				temp.add(temp1);
+			}
+			else {
+		instruction temp1=new instruction(instructions.get(i).type,instructions.get(i).destination,instructions.get(i).source1,instructions.get(i).immediate, instructions.get(i).exectime);
+				
+				temp.add(temp1);
+			}
+				
+				
+				
+			}
+			for(int k=j;k<instructions.size();k++) {
+			for(stations s: Addstations) {
+				if(s.busy&&s.instruction.equals(instructions.get(k))) {
+					s.busy=false;
+					s.destination=null;
+					s.instruction=null;
+					s.Qj=null;
+					s.Qk=null;
+					
 				}
 			}
+				
+			for(stations s: Mulstations) {
+				if(s.busy&&s.instruction.equals(instructions.get(k))) {
+					s.busy=false;
+					s.destination=null;
+					s.instruction=null;
+					s.Qj=null;
+					s.Qk=null;
+					
+				}
+			}
+				
+
+			
+			for(stations s: Loadstations) {
+				if(s.busy&&s.instruction.equals(instructions.get(k))) {
+					s.busy=false;
+					s.destination=null;
+					s.instruction=null;
+					s.Qj=null;
+					s.Qk=null;
+					
+				}
+			}
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				if(instructions.get(k).source2!=null) {
+					instruction temp1=new instruction(instructions.get(k).type,instructions.get(k).destination,instructions.get(k).source1,instructions.get(k).source2, instructions.get(k).exectime);
+				temp.add(temp1);
+				}
+				else {
+					instruction temp1=new instruction(instructions.get(k).type,instructions.get(k).destination,instructions.get(k).source1,instructions.get(k).immediate, instructions.get(k).exectime);
+						temp.add(temp1);
+				}
+			}
+			instructions=temp;
+				
+			
+			
+			
+			}
 		}
-			if(optype.equals(mulvs) || optype.equals(divs) || optype.equals(addi) || optype.equals(subi) ){
-				for(stations i :Addstations){
-					if(instruction.equals(station.instruction)){
-						station.busy=false
+		String stationname ="";
+        FloatRegister f0 = null;
+        for(FloatRegister f :FloatRegisterfile) {
+        	if(f.name.equals(instruction.destination)) {
+        		f0=f;
+        	}
+        }
+        FloatRegister f1 = null;
+        for(FloatRegister f :FloatRegisterfile) {
+        	if(f.name.equals(instruction.source1)) {
+        		f1=f;
+        	}
+        }
+        FloatRegister f2 = null;
+        for(FloatRegister f :FloatRegisterfile) {
+        	if(f.name.equals(instruction.source2)) {
+        		f2=f;
+        	}
+        }
+       IntRegister r0 = null;
+        for(IntRegister f :IntRegisterfile) {
+        	if(f.name.equals(instruction.destination)) {
+        		r0=f;;
+        	}
+        }
+        IntRegister r1 = null;
+        for(IntRegister f :IntRegisterfile) {
+        	if(f.name.equals(instruction.source1)) {
+        		r1=f;;
+        	}
+        }IntRegister r2 = null;
+        for(IntRegister f :IntRegisterfile) {
+        	if(f.name.equals(instruction.source2)) {
+        		r2=f;;
+        	}
+        }
+        int imme=instruction.immediate;
+       
+       int end =instruction.exec[1];
+	   if(currentcycle >= end+1){
+		 if(instruction.type.equals(optype.subu) || instruction.type.equals(optype.addu)||instruction.type.equals(optype.subs) || instruction.type.equals(optype.adds) || instruction.type.equals(optype.addi) || instruction.type.equals(optype.subi) ){
+
+			
+			 for(stations i :Addstations){
+				if(instruction.equals(i.instruction)){
+				i.busy=false;
+				int l=Addstations.indexOf(i)+1;
+				stationname="A"+l;
+
+				}
+			}
+			
+			
+			
+			
+			
+			
+		}
+			if(instruction.type.equals(optype.muls) || instruction.type.equals(optype.divs) ){
+				for(stations i :Mulstations){
+					if(instruction.equals(i.instruction)){
+					i.busy=false;
+
+					int l=Mulstations.indexOf(i)+1;
+					stationname="M"+l;
+					
 					}
 				}
 				
 		 }
-		 if(optype.equals(lw) || optype.equals(sw)  ){
-			for(stations i :Addstations){
-				if(instruction.equals(station.instruction)){
-					station.busy=false
+		 if(instruction.type.equals(optype.lw) || instruction.type.equals(optype.sw)  ){
+			for(stations i :Loadstations){
+				if(instruction.equals(i.instruction)){
+				i.busy=false;
+				
+				int l=Loadstations.indexOf(i)+1;
+				stationname="L"+l;
+				
 				}
-			}
+			}}
 			
 		  
 
 	
-	   }
-	   int destination=instruction.destination;
-	   String source1= instruction.source1;
-	   String source2= instruction.source2;
-	   int imm= instruction.immediate;
-		//instruction will have have the optyp (mul,add,load...) as op r1,r2,r3 as r1,r2,r3 and issue,exectue writeresult attrbutes
-		// exectute will be array of two depicting start and end cycles 
-		//your job  is to check wether it will write its result now or no based on comparsion with the end time to the current 
-		//cycle and update the chache and stations accordingly
-        // if lw ana equal to subs adds addi subi haloop on addstations le7ad ma ala2y station el instruction ely gowaha zai el instruction ely m3aky
-		
-   //if instrcution.equals(station.instruction) 
-   //station.busy=false
-	//h3ml kda lel multiply w kman lel load station
-	//h3ml variable esmo inrtuction.destination w yeb2a gowa loop el kebera
-	// String source1= instrucrtion.source1
-    // h3ml nafs el haga le source 2 w el immediate			
-                                                  
+	   }	
+	   System.out.print(stationname);
+	   if(end<this.currentcycle) {
+	   instruction.writeres=currentcycle;
+	   switch (instruction.type) {
+       case adds :
+           f0.value=f1.value+f2.value;
+           f0.qj=null;
+           break;
+       case subs  :
 
+           f0.value=f1.value-f2.value;
+           f0.qj=null;
+           break;
+       case addi  :
+           r0.value=r1.value+imme;
+           r0.qj=null;
+           break;
+       case subi  :
+
+           r0.value=r1.value-imme;
+           r0.qj=null;
+           break;
+       case addu :
+           r0.value=r1.value+r2.value;
+           r0.qj=null;
+           break;
+       case subu  :
+
+           r0.value=r1.value-r2.value;
+           r0.qj=null;
+           break;
+       
+       case muls:
+    	   f0.value=f1.value*f2.value;
+    	   f0.qj=null;
+           break;
+       case divs:
+
+    	   f0.value=f1.value/f2.value;
+    	   f0.qj=null;
+           break;
+       case lw:
+           if(f0==null) {
+
+        	   r0.value=(int) Cache[imme];
+        	  r0.qj=null;
+           }else {
+        	   f0.value=Cache[imme];
+        	   f0.qj=null;
+           }
+           break;
+       case sw:
+    	   if(f0==null) {
+           Cache[imme]=r0.value;
+           }else {
+        	Cache[imme]=f0.value;
+           }
+           break;
+      
+       // Other operation cases
+       default:
+           // Handle unsupported operations or errors
+           break;
+   }
+	   System.out.print(stationname);
+     for(stations s: Addstations) {
+    	   if(s.Qj!=null &&s.Qj.equals(stationname)){
+    		  
+    		   s.Qj=null;
+    	   }
+    	   if(s.Qk!=null &&s.Qk.equals(stationname)){
+    		   s.Qk=null;
+    	   }
+       }
+       for(stations s: Mulstations) {
+    	   if(s.Qj!=null &&s.Qj.equals(stationname)){
+    		   s.Qj=null;
+    	   }
+    	   if(s.Qk!=null &&s.Qk.equals(stationname)){
+    		   s.Qk=null;
+    	   }
+       }
+       for(stations s: Loadstations) {
+    	   if(s.Qj!=null &&s.Qj.equals(stationname)){
+    		   s.Qj=null;
+    	   }
+    	   if(s.Qk!=null &&s.Qk.equals(stationname)){
+    		   s.Qk=null;
+    	   }
+       }
 		
+	   }
 	}
 
+	private void issueaddf(instruction instruction) {
+		FloatRegister dest=null;
+		for(FloatRegister R :FloatRegisterfile) {
+			if(R.name.equals(instruction.destination)) {
+				dest=R;
+				break;
+			}
+		}
+		FloatRegister r2=null;
+		for(FloatRegister R :FloatRegisterfile) {
+			if(R.name.equals(instruction.source1)) {
+				r2=R;
+				break;
+			}
+		}
+		FloatRegister r3=null;
+		for(FloatRegister R :FloatRegisterfile) {
+			if(R.name.equals(instruction.source2)) {
+				r3=R;
+				break;
+			}
+		}
+		for(stations s :Addstations) {
+			if(!s.busy) {
+				System.out.print("station empty");
+				s.busy=true;
+				s.instruction=instruction;
+				instruction.issue=currentcycle;
+				s.Qj=r2.qj;
+				if(r3!=null) {
+				s.Qk=r3.qj;
+				}else {
+					s.Qk=null;
+				}
+				if(s.Qj==null) {
+					s.vj=r2.value;
+				}
+				if(s.Qk==null&&r3!=null) {
+					s.vk=r3.value;
+				}
+				int ziko=Addstations.indexOf(s)+1;
+				if(dest!=null) {
+				dest.qj="A"+ziko;
+				}
+				return;
+			}
+		}
+		
+	}
 
 	private void issueadd(instruction instruction) {
 		IntRegister dest=null;
@@ -265,85 +623,27 @@ public class main {
 				s.instruction=instruction;
 				instruction.issue=currentcycle;
 				s.Qj=r2.qj;
+				if(r3!=null) {
 				s.Qk=r3.qj;
-				
-				if(s.Qj!="") {
+				}else {
+					s.Qk=null;
+				}
+				if(s.Qj==null) {
 					s.vj=r2.value;
 				}
-				if(s.Qk!="") {
+				if(s.Qk==null&&r3!=null) {
 					s.vk=r3.value;
 				}
 				int ziko=Addstations.indexOf(s)+1;
+				if(dest!=null) {
 				dest.qj="A"+ziko;
+				}
 				return;
 			}
 		}
 		
 	}
 
-
-	private void writeres(instruction instruction)
-	{IntRegister dest=null;
-	for(IntRegister R :IntRegisterfile) {
-		if(R.name.equals(instruction.destination)) {
-			dest=R;
-			break;
-		}
-	}
-	IntRegister r2=null;
-	for(IntRegister R :IntRegisterfile) {
-		if(R.name.equals(instruction.source1)) {
-			r2=R;
-			break;
-		}
-	}
-	IntRegister r3=null;
-	for(IntRegister R :IntRegisterfile) {
-		if(R.name.equals(instruction.source2)) {
-			r3=R;
-			break;
-		}
-	}
-		for(IntRegister R :IntRegisterfile) {
-			if(R.name.equals(instruction.destination)) {
-				dest=R;
-				break;
-			}
-		}
-                  
-		int stationunm=-1;
-		
-		if(instruction.exec[1]<currentcycle) {
-                    	 
-                    	 for(stations s: Addstations) {
-                    		 if(s.instruction.equals(instruction)) {
-                    			
-                    			 instruction.writeres=currentcycle;
-                    			 s.busy=false;
-                    			 s.Qj=null;
-                    			 s.Qk=null;
-                    			 dest.qj=null;
-                    			 dest.value=r2.value+r3.value;
-                    			 stationunm=Addstations.indexOf(s)+1;
-                    			break;
-                    			
-                    		 }
-                    	 }
-                    	 
-                     }
-		 for(stations s: Addstations) {
-    		if(s.Qj!=null&& s.Qj.contains("A"+stationunm+"")) {
-    			s.Qj=null;
-    	 }
-    		if(s.Qk!=null&&s.Qk.contains("A"+stationunm+"")) {
-    			s.Qk=null;
-    	 }
-    	 
-     }
-				
-				
-				
-    }
 
 	
 	
@@ -359,6 +659,12 @@ public class main {
 	        case subi  :
 	            executeAdd(instruction);
 	            break;
+	        case addu  :
+	            executeAdd(instruction);
+	            break;
+	        case subu  :
+	            executeAdd(instruction);
+	            break;
 	        case muls:
 	            executeMultiply(instruction);
 	            break;
@@ -371,7 +677,9 @@ public class main {
 	        case sw:
 	            executeStore(instruction);
 	            break;
-	       
+	        case bnez:
+	            executeAdd(instruction);
+	            break;
 	        // Other operation cases
 	        default:
 	            // Handle unsupported operations or errors
@@ -420,19 +728,7 @@ public class main {
 
 
 	private void executeAdd(instruction instruction) {
-	   
-	    IntRegister r2 = null;
-	    for( IntRegister r :IntRegisterfile) {
-	    	if(r.name.equals(instruction.source1)) {
-	    		r2=r;
-	    	}
-	    }
-	    IntRegister r3=null;
-	    for( IntRegister r :IntRegisterfile) {
-	    	if(r.name.equals(instruction.source1)) {
-	    		r3=r;
-	    	}
-	    }
+	   System.out.print(instruction.type);
 	    int issueCycle = instruction.issue;
 	    int[] executeCycles = instruction.exec;
 
@@ -447,7 +743,7 @@ public class main {
             
 	        if (addstation!=null) {
 
-		            if (r2.qj==null&&r3.qj==null) {
+		            if (addstation.Qj==null&&addstation.Qk==null) {
 		                addstation.busy=true;
 		             
 
@@ -464,13 +760,8 @@ public class main {
 }
 	
 	
+	} 
 	
-	         } else {
-	            // Handle station or unit not available
-	            // Possibly stall or implement a mechanism to handle this situation
-	        }
-	   
-	}
 
 
 	private void executeMultiply(instruction instruction) {
@@ -492,7 +783,7 @@ public class main {
 
 	    stations mulStation = null ; 
 	    for(stations s :Mulstations) {
-	    	if(s.instruction.equals(instruction)) {
+	    	if(s.instruction!=null&&s.instruction.equals(instruction)) {
 	    		mulStation=s;
 	    		break;
 	    	}
@@ -536,7 +827,7 @@ public class main {
 
 	    stations loadstation = null ; 
 	    for(stations s :Loadstations) {
-	    	if(!s.busy) {
+	    	if(s.instruction.equals(instruction)) {
 	    		loadstation=s;
 	    		break;
 	    	}
